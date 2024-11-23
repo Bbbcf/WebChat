@@ -1,23 +1,192 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Firebase Chat</title>
-  <link rel="stylesheet" href="style.css">
-  
-  <!-- Firebase SDK (CDN) -->
-  <script src="https://www.gstatic.com/firebasejs/9.16.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.16.0/firebase-database.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng Nhập</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600&display=swap');
+        body {
+            font-family: 'Open Sans', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+            overflow: hidden; /* Ngăn chặn cuộn */
+            margin: 0; /* Xóa margin của body */
+        }
+        .container {
+            position: relative;
+            width: 300px; /* Độ rộng của hộp đăng nhập */
+            height: 400px; /* Chiều cao của hộp */
+            overflow: hidden; /* Ẩn các phần tử ngoài vùng hiển thị */
+            border-radius: 12px; /* Bo góc cho khung */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .login, .register {
+            background-color: #fff;
+            padding: 20px;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            box-sizing: border-box; /* Đảm bảo padding không làm thay đổi kích thước */
+            transition: transform 0.5s ease; /* Hiệu ứng chuyển động */
+        }
+        .login {
+            z-index: 2; /* Đặt lên trên */
+        }
+        .register {
+            transform: translateX(100%); /* Đặt bên phải khỏi khung nhìn */
+        }
+        input {
+            margin: 10px 0;
+            padding: 10px;
+            width: calc(100% - 20px); /* Chiều rộng bằng 100% trừ padding */
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box; /* Đảm bảo padding không làm thay đổi kích thước */
+        }
+        button {
+            padding: 10px;
+            width: 100%;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        p {
+            color: red;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
-  <div class="chat-container">
-    <div id="chatBox" class="chat-box"></div>
-    <input type="text" id="messageInput" placeholder="Nhập tin nhắn..." class="message-input">
-    <button id="sendButton" class="send-button">Gửi</button>
-  </div>
+    <div class="container">
+        <div class="login" id="login-container">
+            <h2>Đăng Nhập</h2>
+            <label for="email">Email:</label>
+            <input type="email" id="login-email" placeholder="Nhập email của bạn" required>
 
-  <!-- Thêm script JavaScript -->
-  <script src="app.js"></script>
+            <label for="password">Mật khẩu:</label>
+            <input type="password" id="login-password" placeholder="Nhập mật khẩu" required>
+
+            <button id="login-button">Đăng Nhập</button>
+            <p id="login-message"></p>
+            <br>
+            <button id="show-register-button">Tạo Tài Khoản</button>
+        </div>
+
+        <div class="register" id="register-container">
+            <h2>Tạo Tài Khoản</h2>
+            <label for="email">Email:</label>
+            <input type="email" id="register-email" placeholder="Nhập email của bạn" required>
+
+            <label for="password">Mật khẩu:</label>
+            <input type="password" id="register-password" placeholder="Nhập mật khẩu" required>
+
+            <label for="confirm-password">Xác nhận mật khẩu:</label>
+            <input type="password" id="confirm-password" placeholder="Nhập lại mật khẩu" required>
+
+            <button id="create-account-button">Tạo tài khoản</button>
+            <p id="register-message"></p>
+            <br>
+            <button id="show-login-button">Trở lại Đăng Nhập</button>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBbevc1tvucj4SxX0Ejof3XGXbkOR9p8ZU",
+            authDomain: "webchat-354d8.firebaseapp.com",
+            databaseURL: "https://webchat-354d8-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "webchat-354d8",
+            storageBucket: "webchat-354d8.firebasestorage.app",
+            messagingSenderId: "1005682578301",
+            appId: "1:1005682578301:web:ca5ff901b74ee9a78cb214",
+            measurementId: "G-XP8PC32VMF"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // Hàm đăng nhập
+        function login() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const message = document.getElementById('login-message');
+
+            signInWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    // Đăng nhập thành công, chuyển đến trang chat
+                    message.textContent = "Đăng nhập thành công!";
+                    message.style.color = "green";
+                    console.log("Thông tin người dùng:", userCredential.user);
+                    // Chuyển hướng đến trang chat
+                    window.location.href = './chat/index.html'; 
+                })
+                .catch((error) => {
+                    message.textContent = "Lỗi đăng nhập: " + error.message;
+                    message.style.color = "red";
+                    console.error("Lỗi đăng nhập:", error.message);
+                });
+        }
+
+        // Hàm tạo tài khoản
+        function createAccount() {
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            const message = document.getElementById('register-message');
+
+            if (password !== confirmPassword) {
+                message.textContent = "Mật khẩu không khớp!";
+                message.style.color = "red";
+                return;
+            }
+
+            createUserWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    message.textContent = "Tạo tài khoản thành công!";
+                    message.style.color = "green";
+                    console.log("Thông tin người dùng:", userCredential.user);
+                })
+                .catch((error) => {
+                    message.textContent = "Lỗi tạo tài khoản: " + error.message;
+                    message.style.color = "red";
+                    console.error("Lỗi tạo tài khoản:", error.message);
+                });
+        }
+
+        // Chuyển đến trang đăng ký
+        document.getElementById('show-register-button').addEventListener('click', () => {
+            const loginContainer = document.getElementById('login-container');
+            const registerContainer = document.getElementById('register-container');
+
+            loginContainer.style.transform = 'translateX(-100%)'; // Đẩy trang đăng nhập sang trái
+            registerContainer.style.transform = 'translateX(0)'; // Hiện trang đăng ký
+        });
+
+        document.getElementById('login-button').addEventListener('click', login);
+        document.getElementById('create-account-button').addEventListener('click', createAccount);
+
+        // Trở lại trang đăng nhập
+        document.getElementById('show-login-button').addEventListener('click', () => {
+            const loginContainer = document.getElementById('login-container');
+            const registerContainer = document.getElementById('register-container');
+
+            registerContainer.style.transform = 'translateX(100%)'; // Đẩy trang đăng ký sang phải
+            loginContainer.style.transform = 'translateX(0)'; // Hiện trang đăng nhập
+        });
+    </script>
 </body>
 </html>
